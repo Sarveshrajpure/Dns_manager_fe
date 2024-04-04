@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm i
+      - run: npm ci
       - run: |
           touch .env
           echo "${{ secrets.DNSMANAGER_FE_SECRET }}" > .env
