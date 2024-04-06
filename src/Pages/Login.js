@@ -24,7 +24,6 @@ const Login = () => {
       if (data) {
         setLoader(true);
         let response = await loginUser(data);
-        localStorage.setItem("x-access-token", response.token);
         if (response) {
           setLoader(false);
           navigate("/home");
