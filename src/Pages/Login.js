@@ -25,6 +25,7 @@ const Login = () => {
         setLoader(true);
         let response = await loginUser(data);
         if (response) {
+          localStorage.setItem("userName", response.user.firstName);
           setLoader(false);
           navigate("/home");
         }
@@ -116,9 +117,9 @@ const Login = () => {
               <div className="flex justify-center">
                 <button
                   type="submit"
-                  className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4
-                   focus:ring-blue-300 font-semibold rounded-md text-md px-10 py-2.5 me-2 mb-2
-                    dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                  className="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br
+                  focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800
+                  font-semibold rounded-md text-lg px-8 py-2.5 text-center me-2 mb-2"
                 >
                   Login
                 </button>

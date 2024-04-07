@@ -12,8 +12,13 @@ export const userIsAuth = async () => {
   if (!getTokenCookie()) {
     return false;
   } else {
-    const user = await axiosInstance.get("/auth/isauth", getAuthHeader());
+    const response = await axiosInstance.get("/auth/isauth", getAuthHeader());
 
-    return user;
+    return response.data;
   }
+};
+
+export const signOutUser = async () => {
+  const response = await axiosInstance.get("/auth/logout", getAuthHeader());
+  return response.data;
 };
