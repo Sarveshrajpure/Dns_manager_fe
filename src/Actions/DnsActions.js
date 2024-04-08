@@ -11,7 +11,7 @@ export const getDnsRecordsMetrics = async (value) => {
   return response.data;
 };
 
-export const ListDnsRecords = async (value) => {
+export const listDnsRecords = async (value) => {
   let response = await axiosInstance.get(
     `/dns/listdnsrecords/?HostedZoneId=${value}`,
     getAuthHeader()

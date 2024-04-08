@@ -12,11 +12,8 @@ const PrivateRoute = () => {
         /* Update effect logic to track correct state */
         const isUserLogged = await userIsAuth();
         if (isUserLogged) {
-          console.log("cookie found");
-          console.log(isUserLogged);
           setState(isUserLogged ? "loggedin" : "redirect");
         } else {
-          console.log("cookie not found");
           setState(isUserLogged ? "loggedin" : "redirect");
         }
       } catch {

@@ -7,7 +7,7 @@ const MetricsCard = ({ metric, displayText }) => {
       <div className="text-2xl font-semibold ">
         <CountUp end={metric} duration={2} />
       </div>
-      <div className="text-lg font-medium w-[8rem] whitespace-nowrap overflow-x-hidden text-ellipsis">
+      <div className="text-lg font-medium w-[12rem] whitespace-nowrap overflow-x-hidden text-ellipsis">
         {displayText}
       </div>
     </div>
