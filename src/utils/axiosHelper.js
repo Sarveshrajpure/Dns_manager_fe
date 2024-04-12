@@ -10,6 +10,6 @@ if (process.env.REACT_APP_ENVIRONMENT === "prod") {
 }
 
 export const axiosInstance = axios.create({
-  baseURL: "https://dns-manager-be.vercel.app/api",
+  baseURL: baseUrl,
   withCredentials: true,
 });
