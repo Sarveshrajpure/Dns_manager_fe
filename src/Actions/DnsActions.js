@@ -19,3 +19,15 @@ export const listDnsRecords = async (value) => {
 
   return response.data;
 };
+
+export const createDnsRecord = async (values) => {
+  let response = await axiosInstance.post("/dns/create", values, getAuthHeader());
+
+  return response.data;
+};
+
+export const deleteDnsRecord = async (values) => {
+  let response = await axiosInstance.post("dns/delete", values, getAuthHeader());
+
+  return response.data;
+};

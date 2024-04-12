@@ -3,35 +3,67 @@ import { XCircleIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Slide } from "react-awesome-reveal";
-import { editHostedZoneSchema } from "../../Validations/hostedZoneValidations";
+import { createNewRecordSchema } from "../../Validations/dnsValidation";
 import { toast } from "react-toastify";
-import { editHostedZone } from "../../Actions/HostedZonesActions";
+import { createDnsRecord } from "../../Actions/DnsActions";
 import { Oval } from "react-loader-spinner";
 
 const AddNewRecordModal = ({ open, setOpen, Id, setReload, domainName }) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const recordTypeOptions = [
+    { id: 1, type: "A" },
+    { id: 2, type: "AAAA" },
+    { id: 3, type: "CNAME" },
+    { id: 4, type: "MX" },
+    { id: 5, type: "NS" },
+    { id: 6, type: "PTR" },
+    { id: 7, type: "SOA" },
+    { id: 8, type: "SRV" },
+    { id: 9, type: "TXT" },
+  ];
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
     mode: "onChange",
-    resolver: yupResolver(editHostedZoneSchema),
+    resolver: yupResolver(createNewRecordSchema),
   });
+
+  console.log(errors);
 
   const onSubmit = async (data, e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      if (Id) {
-        await editHostedZone({ Id, Comment: data.Comment });
-        setLoading(false);
-        toast.success("Domain Updated!");
-        setReload((prev) => !prev);
-        setOpen(false);
-      }
+
+      let recordToBeCreated = {
+        ChangeBatch: {
+          Changes: [
+            {
+              ResourceRecordSet: {
+                Name: `${data.Name === "" ? domainName : data.Name + domainName}`,
+                Type: data.recordType,
+                ResourceRecords: [{ Value: data.Value }],
+                TTL: "3000",
+              },
+            },
+          ],
+        },
+        HostedZoneId: Id,
+      };
+
+      await createDnsRecord(recordToBeCreated);
+      setLoading(false);
+      setOpen(false);
+      setReload((prev) => !prev);
     } catch (err) {
-      toast.error("Error updating domain, something went wrong!");
+      if (err.response) {
+        setError("Error - ", err.response.data?.message);
+        toast.error("Error creating new record! ");
+      }
       setOpen(false);
       setLoading(false);
     }
@@ -60,9 +92,33 @@ const AddNewRecordModal = ({ open, setOpen, Id, setReload, domainName }) => {
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <div className="mb-6">
                     <label className="block text-sm font-medium mb-2" htmlFor="description">
+                      Record Type
+                    </label>
+
+                    <select
+                      className="bg-gray-200 p-2 rounded-md"
+                      id="recordType"
+                      {...register("recordType")}
+                    >
+                      {recordTypeOptions.map((item) => (
+                        <option>{item.type}</option>
+                      ))}
+                    </select>
+
+                    {
+                      <div
+                        className="invalid-feedback  text-red-400 text-xs px-2 pt-1"
+                        style={errors.recordType ? { display: "block" } : {}}
+                      >
+                        {errors.recordType?.message}
+                      </div>
+                    }
+                  </div>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium mb-2" htmlFor="description">
                       Record Name
                     </label>
-                    <div className="flex gap-1 items-center ">
+                    <div className="flex gap-2 items-center ">
                       <div className="w-4/5">
                         <input
                           className=" bg-gray-200 appearance-none border-2 border-gray-200 
@@ -81,14 +137,35 @@ const AddNewRecordModal = ({ open, setOpen, Id, setReload, domainName }) => {
                     <label className="block text-[12px] mb-2" htmlFor="description">
                       Keep blank to create a record for the root domain.
                     </label>
-                    {
-                      <div
-                        className="invalid-feedback  text-red-400 text-xs px-2 pt-1"
-                        style={errors.Comment ? { display: "block" } : {}}
-                      >
-                        {errors.Comment?.message}
-                      </div>
-                    }
+
+                    <div
+                      className="invalid-feedback  text-red-400 text-xs px-2 pt-1"
+                      style={errors.Name ? { display: "block" } : {}}
+                    >
+                      {errors.Name?.message}
+                    </div>
+                  </div>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium mb-2" htmlFor="description">
+                      Value
+                    </label>
+
+                    <input
+                      className=" bg-gray-200 appearance-none border-2 border-gray-200 
+                  rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none
+                focus:bg-white focus:border-blue-700"
+                      id="Value"
+                      type="text"
+                      placeholder="Enter Value"
+                      {...register("Value")}
+                    />
+
+                    <div
+                      className="invalid-feedback  text-red-400 text-xs px-2 pt-1"
+                      style={errors.Value ? { display: "block" } : {}}
+                    >
+                      {errors.Value?.message}
+                    </div>
                   </div>
                   {loading ? (
                     <div className=" flex justify-center w-full p-2 mt-10">
@@ -108,7 +185,7 @@ const AddNewRecordModal = ({ open, setOpen, Id, setReload, domainName }) => {
                   )}
                 </form>
               </div>
-              <div className="modalFooter"></div>
+              <div className="modalFooter">{error ? error : ""}</div>
             </div>
           </Slide>
         </div>

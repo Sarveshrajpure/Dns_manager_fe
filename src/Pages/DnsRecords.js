@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { getDnsRecordsMetrics, listDnsRecords } from "../Actions/DnsActions";
+import { getDnsRecordsMetrics, listDnsRecords, deleteDnsRecord } from "../Actions/DnsActions";
 import { toast } from "react-toastify";
 import MetricsCard from "../Components/MetricsCard";
 import { Oval } from "react-loader-spinner";
 import TableComp from "../Components/TableComponent/TableComp";
 import AddNewRecordModal from "../Components/Modals/AddNewRecordModal";
+import DeleteModal from "../Components/Modals/DeleteModal";
 
 const DnsRecords = () => {
   const location = useLocation();
@@ -13,9 +14,13 @@ const DnsRecords = () => {
   const domainName = location.state.domainName;
   const [loadingMetrics, setLoadingMetrics] = useState(false);
   const [loadingRecords, setLoadingRecords] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
+  const [currentRecord, setCurrentRecord] = useState("");
   const [metrics, setMetrics] = useState([]);
   const [dnsRecords, setDnsRecords] = useState([]);
+  const [reload, setReload] = useState(false);
   const pagination = true;
   const paginationPageSize = 10;
   const paginationPageSizeSelector = [10, 25, 50];
@@ -42,7 +47,7 @@ const DnsRecords = () => {
         let response = await listDnsRecords(id);
 
         let records = response?.ResourceRecordSets.map((item) => {
-          return { Name: item.Name, Type: item.Type, value: item.ResourceRecords };
+          return { Name: item.Name, Type: item.Type, Value: item.ResourceRecords };
         });
 
         console.log(records);
@@ -54,13 +59,13 @@ const DnsRecords = () => {
     };
 
     getDnsRecords();
-  }, [id]);
+  }, [id, reload]);
 
   const renderValues = (props) => {
     console.log(props);
     return (
       <div>
-        {props.data.value?.map((item, index) => (
+        {props.data.Value?.map((item, index) => (
           <div key={index}>{item.Value}</div>
         ))}
       </div>
@@ -81,11 +86,16 @@ const DnsRecords = () => {
   };
 
   const deleteRecordBtn = (props) => {
+    console.log(props);
     return (
       <div className="flex items-center h-full">
         <button
           className="bg-red-500 hover:bg-red-700
     text-white font-medium h-[2rem] mt-1  flex items-center rounded-md px-4 "
+          onClick={() => {
+            setOpenDelete(true);
+            setCurrentRecord(props.data);
+          }}
         >
           Delete Record
         </button>
@@ -107,6 +117,40 @@ const DnsRecords = () => {
     { field: "Edit Domain", cellRenderer: editRecordBtn, flex: 1 },
     { field: "Delete Domain", cellRenderer: deleteRecordBtn, flex: 1 },
   ];
+
+  const deleteRecord = async () => {
+    try {
+      setLoadingDelete(true);
+      if (currentRecord) {
+        console.log(currentRecord);
+        let recordToBeDeleted = {
+          ChangeBatch: {
+            Changes: [
+              {
+                ResourceRecordSet: {
+                  Name: currentRecord.Name,
+                  Type: currentRecord.Type,
+                  ResourceRecords: [{ Value: currentRecord.Value[0]?.Value }],
+                  TTL: "3000",
+                },
+              },
+            ],
+          },
+          HostedZoneId: id,
+        };
+
+        await deleteDnsRecord(recordToBeDeleted);
+        setLoadingDelete(false);
+        setOpenDelete(false);
+        setReload((prev) => !prev);
+        toast.success("Record deleted!");
+      }
+    } catch (err) {
+      console.log(err);
+      toast.error("Error deleting record", err.message);
+      setLoadingDelete(false);
+    }
+  };
 
   return (
     <div className="mt-14">
@@ -154,7 +198,21 @@ const DnsRecords = () => {
         )}
       </div>
 
-      <AddNewRecordModal open={openAdd} setOpen={setOpenAdd} domainName={domainName} />
+      <AddNewRecordModal
+        open={openAdd}
+        setOpen={setOpenAdd}
+        Id={id}
+        setReload={setReload}
+        domainName={domainName}
+      />
+
+      <DeleteModal
+        open={openDelete}
+        setOpen={setOpenDelete}
+        title={"Delete Record"}
+        secondaryText={`Record to be deleted - ${currentRecord.Name} `}
+        funcToBeCalledOnConfirm={deleteRecord}
+      />
     </div>
   );
 };
